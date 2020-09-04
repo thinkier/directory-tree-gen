@@ -1,7 +1,17 @@
 use std::{env, fs};
 use std::fmt::{self, Formatter, Result as FmtResult};
-use std::io;
 use std::path::Path;
+
+const EXCLUDES: &[&str] = &[
+	".git",
+	"target",
+	".idea",
+	"Cargo.lock",
+	"node_modules",
+	"pkg",
+	"dist",
+	"package-lock.json"
+];
 
 #[derive(Debug)]
 pub enum DirectoryTree {
@@ -78,15 +88,19 @@ impl DirectoryTree {
 			.filter(|item| item.is_ok())
 			.map(|item| item.unwrap())
 			.map(|item| item)
-			.map(|item| {
-				let folder = fs::read_dir(&item.path()).is_ok();
-
+			.filter_map(|item| {
 				let file_name = item.file_name().to_string_lossy().to_string();
-				if folder {
+
+				if EXCLUDES.contains(&file_name.as_ref()) {
+					return None;
+				}
+
+				let folder = fs::read_dir(&item.path()).is_ok();
+				Some(if folder {
 					DirectoryTree::Folder(file_name, Self::recurse(&item.path()))
 				} else {
 					DirectoryTree::File(file_name)
-				}
+				})
 			})
 			.collect();
 
