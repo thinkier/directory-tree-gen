@@ -51,19 +51,19 @@ impl DirectoryTree {
 					for line in format!("{}", children[i]).lines() {
 						let prefix = if related {
 							if last {
-								"└"
+								"└─"
 							} else {
-								"├"
+								"├─"
 							}
 						} else {
 							if last {
-								" "
+								"  "
 							} else {
-								"│"
+								"│ "
 							}
 						};
 
-						buf += &format!(" {} {}\n", prefix, line);
+						buf += &format!("  {} {}\n", prefix, line);
 						related = false;
 					}
 				}
