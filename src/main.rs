@@ -1,127 +1,92 @@
-use std::{env, fs};
-use std::fmt::{self, Formatter, Result as FmtResult};
+use std::env;
+use std::fs;
+use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-const EXCLUDES: &[&str] = &[
-	".git",
-	"target",
-	".idea",
-	"Cargo.lock",
-	"node_modules",
-	"pkg",
-	"dist",
-	"package-lock.json"
-];
+use crate::directory::DirectoryTree;
 
-#[derive(Debug)]
-pub enum DirectoryTree {
-	File(String),
-	Folder(String, Vec<DirectoryTree>),
+#[derive(Clone, Debug)]
+pub struct Excludes {
+	relative: Vec<String>,
+	absolute: Vec<String>,
 }
 
-impl DirectoryTree {
-	pub fn name(&self) -> &str {
-		match self {
-			DirectoryTree::File(x) => &x,
-			DirectoryTree::Folder(x, _) => &x
+macro_rules! string_vec (($($item:expr),*) => (
+	vec![
+		$($item.to_string()),*
+	]
+));
+
+impl Default for Excludes {
+	fn default() -> Self {
+		Self {
+			absolute: vec![],
+			relative: string_vec![".git", ".idea", "*.iml", "target", "node_modules"],
 		}
 	}
+}
 
-	pub fn is_dir(&self) -> bool {
-		if let DirectoryTree::File(_) = self {
-			return false;
-		}
-
-		return true;
-	}
-
-	pub fn format(&self) -> String {
-		match self {
-			DirectoryTree::File(name) => {
-				return format!("{}\n", name);
-			}
-			DirectoryTree::Folder(name, children) => {
-				let mut buf = format!("{}/\n", name);
-
-				let count = children.len();
-				for i in 0..count {
-					let last = i == count - 1;
-
-					let mut related = true;
-					for line in format!("{}", children[i]).lines() {
-						let prefix = if related {
-							if last {
-								"└─"
-							} else {
-								"├─"
-							}
-						} else {
-							if last {
-								"  "
-							} else {
-								"│ "
-							}
-						};
-
-						buf += &format!("  {} {}\n", prefix, line);
-						related = false;
-					}
-				}
-
-				return buf;
-			}
-		}
-	}
-
-	pub fn from_dir(path: &Path) -> Self {
-		DirectoryTree::Folder(path.file_name().unwrap().to_string_lossy().to_string(), Self::recurse(path))
-	}
-
-	fn recurse(path: &Path) -> Vec<Self> {
-		let dir = if let Ok(x) = fs::read_dir(path) {
-			x
-		} else {
-			return vec![DirectoryTree::File(path.file_name().unwrap().to_string_lossy().to_string())];
-		};
-
-		let mut children: Vec<_> = dir.into_iter()
-			.filter(|item| item.is_ok())
-			.map(|item| item.unwrap())
-			.map(|item| item)
-			.filter_map(|item| {
-				let file_name = item.file_name().to_string_lossy().to_string();
-
-				if EXCLUDES.contains(&file_name.as_ref()) {
-					return None;
-				}
-
-				let folder = fs::read_dir(&item.path()).is_ok();
-				Some(if folder {
-					DirectoryTree::Folder(file_name, Self::recurse(&item.path()))
-				} else {
-					DirectoryTree::File(file_name)
-				})
-			})
+impl Excludes {
+	pub fn contains(&self, path: &Path, take_frags: usize) -> bool {
+		let frags: Vec<_> = path.iter()
 			.collect();
 
-		children.sort_unstable_by(|a, b| {
-			a.name().cmp(b.name())
-		});
-		children.sort_by(|a, b| {
-			b.is_dir().cmp(&a.is_dir())
-		});
+		let item: String = frags.iter()
+			.skip(frags.len() - take_frags)
+			.map(|x| x.to_string_lossy())
+			.collect::<Vec<_>>()
+			.join("/");
 
-		return children;
+		if self.relative.iter()
+			.any(|needle| {
+				if needle.starts_with("*") && item.ends_with(&needle[1..]) {
+					return true;
+				}
+
+				item.contains(needle)
+			}) {
+			return true;
+		}
+
+		self.absolute.iter()
+			.any(|needle| item.starts_with(needle))
+	}
+
+	pub fn from_ignores() -> Self {
+		let ignores = if let Ok(file) = fs::OpenOptions::new()
+			.read(true)
+			.write(false)
+			.open(".gitignore") {
+			let buf = BufReader::new(file);
+
+			buf.lines()
+				.filter(|x| x.is_ok())
+				.map(|x| x.unwrap())
+				.filter(|x| x.len() > 0)
+				.filter(|x| !x.starts_with("#"))
+				.map(|x| x.trim_end_matches("/").to_string())
+		} else {
+			return Default::default();
+		};
+
+		let mut proto = Self::default();
+
+		for ignore in ignores {
+			if ignore.starts_with("/") {
+				proto.absolute.push(ignore.trim_start_matches("/").to_string());
+			} else {
+				proto.relative.push(ignore);
+			}
+		}
+
+		return proto;
 	}
 }
 
-impl fmt::Display for DirectoryTree {
-	fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-		write!(f, "{}", self.format())
-	}
-}
-
+mod directory;
 
 fn main() {
-	println!("{}", DirectoryTree::from_dir(&env::current_dir().unwrap()));
+	let excludes = Excludes::from_ignores();
+
+	println!("{}", DirectoryTree::from_dir(&env::current_dir().unwrap(), &excludes));
 }
