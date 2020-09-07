@@ -21,7 +21,7 @@ impl Default for Excludes {
 	fn default() -> Self {
 		Self {
 			absolute: vec![],
-			relative: string_vec![".git", ".idea", "*.iml", "target", "node_modules", "build"],
+			relative: string_vec!["/.git", "/.idea", "/*.iml", "/target", "/node_modules", "/build"],
 		}
 	}
 }
@@ -31,19 +31,20 @@ impl Excludes {
 		let frags: Vec<_> = path.iter()
 			.collect();
 
-		let item: String = frags.iter()
+		let mut item: String = frags.iter()
 			.skip(frags.len() - take_frags)
 			.map(|x| x.to_string_lossy())
 			.collect::<Vec<_>>()
 			.join("/");
+		item.insert(0, '/');
 
 		if self.relative.iter()
 			.any(|needle| {
-				if needle.starts_with("*") && item.ends_with(&needle[1..]) {
+				if needle.starts_with("/*") && item.ends_with(&needle[2..]) {
 					return true;
 				}
 
-				item.contains(needle)
+				item.ends_with(needle)
 			}) {
 			return true;
 		}
@@ -71,10 +72,11 @@ impl Excludes {
 
 		let mut proto = Self::default();
 
-		for ignore in ignores {
+		for mut ignore in ignores {
 			if ignore.starts_with("/") {
-				proto.absolute.push(ignore.trim_start_matches("/").to_string());
+				proto.absolute.push(ignore);
 			} else {
+				ignore.insert(0, '/');
 				proto.relative.push(ignore);
 			}
 		}
