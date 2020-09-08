@@ -54,7 +54,7 @@ impl DirectoryTree {
 							}
 						};
 
-						buf += &format!("  {} {}\n", prefix, line);
+						buf += &format!(" {} {}\n", prefix, line);
 						related = false;
 					}
 				}
