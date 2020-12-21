@@ -11,3 +11,4 @@ lto = "thin"
 opt-level = 2
 
 [dependencies]
+argh = "^0.1.4"
