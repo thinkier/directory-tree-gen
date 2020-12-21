@@ -7,7 +7,7 @@ use std::sync::mpsc::Receiver;
 const HEADING: &str = "# project directory structure";
 
 pub fn apply_dir_tree(path: &Path, dir: Receiver<Vec<u8>>) -> Result<(), Box<dyn Error>> {
-	let (start, end) = get_existing_content(path)?;
+	let (start, _old_tree, end) = get_existing_content(path)?;
 
 	let mut file = fs::OpenOptions::new()
 		.create(true)
@@ -25,7 +25,7 @@ pub fn apply_dir_tree(path: &Path, dir: Receiver<Vec<u8>>) -> Result<(), Box<dyn
 	Ok(())
 }
 
-fn get_existing_content(path: &Path) -> Result<(String, String), Box<dyn Error>> {
+fn get_existing_content(path: &Path) -> Result<(String, String, String), Box<dyn Error>> {
 	let file = fs::OpenOptions::new()
 		.create(true)
 		.write(true)
@@ -35,11 +35,12 @@ fn get_existing_content(path: &Path) -> Result<(String, String), Box<dyn Error>>
 	let mut read = BufReader::new(file);
 
 	let mut start = String::new();
-	let mut line = String::new();
+	let mut tree = String::new();
 
 	let mut skip = false;
 	let mut heading = false;
 
+	let mut line = String::new();
 	while let Ok(n) = read.read_line(&mut line) {
 		if n == 0 { break; }
 
@@ -48,8 +49,13 @@ fn get_existing_content(path: &Path) -> Result<(String, String), Box<dyn Error>>
 		if heading {
 			if skip {
 				let end_of_block = trimmed == "```";
-				line = String::new();
 
+				if !end_of_block {
+					tree += trimmed;
+					tree += "\n";
+				}
+
+				line = String::new();
 				if end_of_block {
 					break;
 				}
@@ -88,6 +94,7 @@ fn get_existing_content(path: &Path) -> Result<(String, String), Box<dyn Error>>
 
 	return Ok((
 		start,
+		tree,
 		end
 	));
 }
