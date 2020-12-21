@@ -1,5 +1,8 @@
 # directory-tree-gen
+
 Generate a directory tree in ~~ascii~~ text, delightful!
+
+# Project Directory Structure
 
 ```
 directory-tree-gen/
