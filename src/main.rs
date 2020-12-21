@@ -22,7 +22,7 @@ mod excludes;
 #[derive(FromArgs)]
 /// Directory tree generator
 struct MainArgs {
-	/// write the directory tree to the README file at the current (or specified) directory
+	/// write the directory tree to the README.md file at the current (or specified) directory
 	#[argh(switch, short = 'a')]
 	apply: bool,
 
