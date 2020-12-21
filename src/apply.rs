@@ -12,6 +12,7 @@ pub fn apply_dir_tree(path: &Path, dir: Receiver<Vec<u8>>) -> Result<(), Box<dyn
 	let mut file = fs::OpenOptions::new()
 		.create(true)
 		.write(true)
+		.truncate(true)
 		.open(path)?;
 
 	file.write(start.as_bytes())?;
