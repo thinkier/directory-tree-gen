@@ -50,11 +50,11 @@ impl Excludes {
 			.any(|needle| item.starts_with(needle))
 	}
 
-	pub fn from_ignores() -> Self {
+	pub fn from_file(ignore_file:&str) -> Self {
 		let ignores = if let Ok(file) = fs::OpenOptions::new()
 			.read(true)
 			.write(false)
-			.open(".gitignore") {
+			.open(ignore_file) {
 			let buf = BufReader::new(file);
 
 			buf.lines()

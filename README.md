@@ -6,14 +6,21 @@ Generate a directory tree in ~~ascii~~ text, delightful!
 
 ```
 directory-tree-gen/
-  ├─ src/
-  │    ├─ directory.rs
-  │    ├─ excludes.rs
-  │    └─ main.rs
-  ├─ .gitignore
-  ├─ Cargo.toml
-  └─ README.md
-
+ ├─ src/
+ │   ├─ apply.rs
+ │   ├─ channel.rs
+ │   ├─ directory.rs
+ │   ├─ excludes.rs
+ │   └─ main.rs
+ ├─ test/
+ │   ├─ a/
+ │   │   └─ b.txt
+ │   └─ c.txt
+ ├─ .gitignore
+ ├─ Cargo.lock
+ ├─ Cargo.toml
+ └─ README.md
 ```
 
 License: I literally don't care, public domain? - No warranties though, use at own risk.
+use at own risk.

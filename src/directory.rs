@@ -19,11 +19,14 @@ fn to_name(path: &Path) -> String {
 
 fn generate_text_impl<W: Write>(out: &mut W, path: &Path, excludes: &Excludes, prefix: &str, depth: usize) -> Result<(), Box<dyn Error>> {
 	if let Ok(dir) = fs::read_dir(path) {
-		let paths = dir.filter(|x| x.is_ok())
+		let mut paths = dir.filter(|x| x.is_ok())
 			.map(|x| x.unwrap())
 			.map(|x| x.path())
 			.filter(|path| !excludes.contains(path, depth))
 			.collect::<Vec<_>>();
+
+		paths.sort_by(|a, b| a.cmp(b));
+		paths.sort_by_key(|x| !x.is_dir());
 
 		let len = paths.len();
 		for i in 0..len {
