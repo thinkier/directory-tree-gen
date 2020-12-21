@@ -35,18 +35,21 @@ fn generate_text_impl<W: Write>(out: &mut W, path: &Path, excludes: &Excludes, p
 				"├─"
 			};
 
-			write!(out, "{} {} {}", prefix, item_prefix, paths[i].file_name().unwrap().to_string_lossy())?;
-			if is_dir {
-				writeln!(out, "/")?;
-				let item_prefix = if last {
-					" "
-				} else {
-					"│"
-				};
+			if let Some(name) = paths[i].file_name() {
+				let name = name.to_string_lossy();
+				write!(out, "{} {} {}", prefix, item_prefix, name)?;
+				if is_dir {
+					writeln!(out, "/")?;
+					let item_prefix = if last {
+						" "
+					} else {
+						"│"
+					};
 
-				generate_text_impl(out, &paths[i], excludes, &format!("{} {}  ", prefix, item_prefix), depth + 1)?;
-			} else {
-				writeln!(out)?;
+					generate_text_impl(out, &paths[i], excludes, &format!("{} {}  ", prefix, item_prefix), depth + 1)?;
+				} else {
+					writeln!(out)?;
+				}
 			}
 		}
 	}
