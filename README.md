@@ -8,6 +8,7 @@ Generate a directory tree in ~~ascii~~ text, delightful!
 directory-tree-gen/
   ├─ src/
   │    ├─ directory.rs
+  │    ├─ excludes.rs
   │    └─ main.rs
   ├─ .gitignore
   ├─ Cargo.toml
