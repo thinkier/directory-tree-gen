@@ -18,7 +18,7 @@ impl Default for Excludes {
 	fn default() -> Self {
 		Self {
 			absolute: vec![],
-			relative: string_vec!["/.git", "/.idea", "/*.iml", "/target", "/node_modules", "/build", "/out"],
+			relative: string_vec!["/.git", "/.idea", "/*.iml", "/target", "/node_modules", "/build", "/out", "/dist"],
 		}
 	}
 }
